@@ -1,25 +1,66 @@
 import React from 'react';
-import logo from './logo.svg';
 import './App.css';
 
+import VtkControlPanel from './components/VtkControlPanel';
+
+import { getVtkFullScreenRenderComponents, getVtkConeInstance } from './middleware/services/vtkservice';
+
+
 function App() {
+   // @ts-ignore
+  const [ figure, setFigure ] = React.useState(getVtkConeInstance(vtk));
+  const [ resolution, setResolution ] = React.useState(3);
+  const [ renderer, setRenderer ] = React.useState();
+  const [ renderWindow, setRenderWindow ] = React.useState();
+  const [ actor, setActor ] = React.useState();
+
+  
+  React.useEffect( () => {
+    // @ts-ignore
+    const renderComponents = getVtkFullScreenRenderComponents(vtk, figure);
+    renderComponents.renderer.setBackground(1, 0, 0);
+    renderComponents.actor.getProperty().setColor(0, 0, 0.83);
+    setRenderer(renderComponents.renderer as any);
+    setRenderWindow(renderComponents.renderWindow as any);
+    setActor(renderComponents.actor as any)
+   
+  }, [figure])
+  
+  React.useEffect( () => {
+      figure.setResolution(resolution);
+      if (renderWindow !== undefined) {
+         //@ts-ignore Object is possibly 'undefined'
+        renderWindow.render();
+      }
+  }, [resolution, figure, renderWindow])
+
+
+  const handleChange = (event: any, newValue: number | number[]) => {
+    setResolution(newValue as number);
+  };
+
+  const handleBackgroundChange = (event: any, newValue: number[]) => {    
+    //@ts-ignore Object is possibly 'undefined'
+    renderer.setBackground(newValue[0], newValue[1], newValue[2]);
+    //@ts-ignore Object is possibly 'undefined'
+    renderWindow.render()
+  }
+
+  const handleFigureChange = (event: any, newValue: number | number[]) => {
+    //@ts-ignore Object is possibly 'undefined'
+    actor.getProperty().setColor(newValue[0], newValue[1], newValue[2])
+    if (renderWindow !== undefined) {
+      //@ts-ignore Object is possibly 'undefined'
+     renderWindow.render();
+   }
+  }
+
   return (
-    <div className="App">
-      <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>
-          Edit <code>src/App.tsx</code> and save to reload.
-        </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn React
-        </a>
-      </header>
-    </div>
+     <VtkControlPanel 
+        onResolutionChange={handleChange} 
+        onBackgroundChange={handleBackgroundChange}
+        onFigureChange={handleFigureChange}
+      />
   );
 }
 
